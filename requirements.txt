@@ -1,9 +1,5 @@
-streamlit==1.38.0
-openai==1.58.1
-python-dotenv==1.0.0
-pydantic==2.9.0
-langchain==0.3.13
-langchain-core==0.3.29
-langchain-openai==0.3.0
-pandas==2.3.3
+streamlit
+python-dotenv
+langchain-openai
+pandas
 numpy
