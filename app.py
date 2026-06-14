@@ -11,6 +11,7 @@ from langchain_core.output_parsers import PydanticOutputParser
 from langchain_core.messages import SystemMessage
 from langchain_core.runnables import RunnablePassthrough, RunnableLambda
 from langchain_classic.memory import ConversationBufferWindowMemory
+
 # 加载环境变量
 load_dotenv()
 
@@ -41,7 +42,7 @@ class EmotionalResponse(BaseModel):
 # ==================== 3. 输出解析器 ====================
 parser = PydanticOutputParser(pydantic_object=EmotionalResponse)
 
-# ==================== 4. 长期记忆管理（简化版，不继承BaseMemory）====================
+# ==================== 4. 长期记忆管理（简化版）====================
 class LongTermMemory:
     """长期记忆管理器 - 简化版"""
 
@@ -293,12 +294,17 @@ class PsychologicalChain:
     def _parse_output(self, output: Any) -> Dict:
         """解析输出并保存记忆"""
         try:
+            # 提取文本内容
             content = output.content if hasattr(output, 'content') else str(output)
 
-            # 提取JSON
+            # 提取JSON（支持多种包裹格式）
             if "```json" in content:
                 content = content.split("```json")[1].split("```")[0]
+            elif "```" in content:
+                content = content.split("```")[1].split("```")[0]
 
+            # 清理可能的空白字符
+            content = content.strip()
             parsed = self.parser.parse(content)
 
             # 保存到短期记忆
@@ -322,8 +328,11 @@ class PsychologicalChain:
                 "memory_note": parsed.memory_note
             }
         except Exception as e:
+            # ✅ 修复：解析失败时，只提取回复文本，不显示整个对象
+            reply_text = output.content if hasattr(output, 'content') else str(output)
+            # 如果内容显然不是JSON（长度过短或包含明显错误信息），直接返回文本
             return {
-                "reply": str(output),
+                "reply": reply_text,
                 "emotional_state": "平静",
                 "suggestion": "继续聊一聊吧",
                 "memory_note": ""
@@ -414,6 +423,7 @@ with st.sidebar:
         key="api_key_input"
     )
 
+    # 注意：这里重复定义了一次 temperature，需要删除下面重复的那一行
     temperature = st.slider(
         "回复创造性", 0.0, 1.0, 0.7, 0.1,
         key="temp_slider"
@@ -431,7 +441,7 @@ with st.sidebar:
         index=0
     )
 
-    temperature = st.slider("回复创造性", 0.0, 1.0, 0.7, 0.1)
+    # ❌ 删除了重复的 temperature slider（原代码第456行附近有重复）
 
     if api_key and st.session_state.chain is None:
         with st.spinner("初始化 LangChain..."):
