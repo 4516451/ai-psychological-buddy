@@ -1,6 +1,10 @@
+langchain_classic
+langchain_core
+langchain_openai
+langchain_community
 streamlit
+openai
 python-dotenv
-langchain
-langchain-openai
+pydantic
 pandas
 numpy
